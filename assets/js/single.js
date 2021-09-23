@@ -1,14 +1,41 @@
 // container to hold issues
 var issueContainerEl = document.querySelector("#issue-container");
+//container to display warning
+var limitWarningEl = document.querySelector("#limit-warning");
+var repoNameEl = document.querySelector("#repo-name")
+
+
+
+var getRepoName = function () {
+    var queryString = document.location.search;
+    var repoName = queryString.split("=")[1];
+
+    repoNameEl.textContent = repoName;
+    // if repo exists then show the result
+    if (repoName) {
+        repoNameEl.textContent = repoName;
+        getRepoIssues(repoName);
+        // if no repo was given, redirect to the homepage
+    }
+    else {
+        document.location.replace("./index.html");
+
+    }
+
+}
 
 var getRepoIssues = function (repo) {
-    var apiUrl = "https://api.github.com/repos/" + repo + "/issues?direction=asc";
+    var apiUrl = "https://api.github.com/repos/" + repo + "/issues?direction=";
     fetch(apiUrl).then(function (response) {
         // request was successful
         if (response.ok) {
             response.json().then(function (data) {
                 // pass response data to dom function
                 displayIssues(data);
+                // check if api has paginated issues
+                if (response.headers.get("Link")) {
+                    displayWarning(repo);
+                }
             });
         }
         else {
@@ -17,6 +44,18 @@ var getRepoIssues = function (repo) {
     });
 
 }
+// function to diaplay warning if the repo has more then 30issues
+var displayWarning = function (repo) {
+    // add text to warning container
+    limitWarningEl.textContent = "To see more than 30 issues, visit ";
+    var linkEl = document.createElement("a");
+    linkEl.textContent = "See More Issues on GitHub.com";
+    linkEl.setAttribute("href", "https://github.com/" + repo + "/issues");
+    linkEl.setAttribute("target", "_blank");
+
+    // append to warning container
+    limitWarningEl.appendChild(linkEl);
+};
 
 
 
@@ -59,4 +98,5 @@ var displayIssues = function (issues) {
 
 };
 
-getRepoIssues("facebook/react");
+
+getRepoName();
